@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
 
 
         binding.buttonScanner.setOnClickListener {
+            binding.editTextTextMultiLineIp.setText(" ")
             binding.buttonScanner.setText("SEARCHING")
             testIpRange(ipAddress)
         }
