@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">TestIp</string>
+    <string name="ip_active">ip active</string>
+    <string name="ip_local_address">ip local address</string>
+    <string name="liste_des_ips_actifs">Liste des IPS actifs</string>
+    <string name="textview">TextView</string>
+    <string name="scanner">scanner</string>
 </resources>
