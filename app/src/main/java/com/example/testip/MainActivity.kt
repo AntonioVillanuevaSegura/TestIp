@@ -1,6 +1,10 @@
+/*
+ *Scanner IPs Android Kotlin
+ * Antonio Villanueva Segura
+ */
 package com.example.testip
 
-
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.example.testip.databinding.ActivityMainBinding
@@ -15,15 +19,13 @@ import java.io.IOException
 import java.lang.Exception
 import java.net.*
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     var tmp="" //Texto temporal contiene las IPs
-    var lineasCreadas=0
-    var tempo=0
+    var lineasCreadas=0 //Lineas de IPs creadas ,analizadas
+    var tempo=0 //Un contador de tiempo , para evitar bloqueos en el ScrollBar de la vista de IPs
 
-
-
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -31,25 +33,24 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(view)
 
-        val ip1 = binding.etiquetteIp //Ip aparato
+        val ip1 = binding.etiquetteIp //Binding Ip local del telefono
 
         val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
         val ipAddress: String = Formatter.formatIpAddress(wifiManager.connectionInfo.ipAddress)
-        ip1.setText("IP ADDRESS " + ipAddress)
+        ip1.setText("IP ADDRESS $ipAddress") //Direccion IP telefono
 
 
+        //Barra desplazamiento en la lista IPs ...bastante problematico
         binding.ipListe.movementMethod = ScrollingMovementMethod.getInstance()
 
-        var button=binding.buttonScanner
+        val button=binding.buttonScanner //Binding boton
 
-       // binding.ipListe.movementMethod=ScrollingMovementMethod ()
         button.setOnClickListener {
-            binding.ipListe.setText(" .... searching ...")
+            binding.ipListe.text = " .... searching ..."
             //button.setText("SEARCHING")
 
             testIpRange(ipAddress) //Analiza ips de 0 .. 255
-
 
             /*Segundo scope Evita crash TextView && scrollBar && corutina
             * Cuando no se crean nuevas lineas se copia el fichero temporal
@@ -59,62 +60,54 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) {
 
                     while (tempo<10) { //Un tiempo antes de escribir en TextView no hay nuevas lineas
-                        delay(10) //Retardo tonto
+                        delay(10) //Retardo tonto para evitar crash en scroll Bar
 
                         if (lineasCreadas < cuentaLineasCreadas(tmp)) {
                             lineasCreadas = cuentaLineasCreadas(tmp)
                             tempo = 0 //Reset nueva linea
                         } else {
                             tempo++
-                            println ("Tempo "+tempo.toString())
                         }
+                    }
+                    //Escribe la lista de IPs en el TextView (tmp)
+                    binding.ipListe.setText(tmp)
+                }
+            }
+        }
 
+    }
+
+    //Analiza un rango de IPs desde la IP base en mascara 255.255.255.0..255
+    fun testIpRange(ip_: String) {
+        tmp=""
+
+        var ip = ip_ //Recupera ip en dispositivo Android
+
+        //Cut last value  in ip  ip[3]
+        ip = ip.subSequence(0, ip.lastIndexOf(".")).toString()
+
+        for (elem in 0..255) { //Recorre ips de 0 .. 255
+
+            val ip_actual = ip + "." + elem.toString() //Ip actual
+
+            GlobalScope.launch(Dispatchers.Main) {
+                withContext(Dispatchers.IO) {
+
+                    //var existe: Boolean
+                    //existe = ipExist(ip_actual)
+                    /*Antes de escribir en el TextView se guarda en un txt temporal
+                    *Una segunda corrutina se encarga de escribir en el TextView
+                    * pasado un tiempo sin nuevas lineas , es para evitar crash
+                     */
+
+                    if (ipExist(ip_actual)) {//Solo IPs que existen
+                       // tmp += ip_actual + "..." + existe.toString() + '\n'
+                        tmp += ip_actual + '\n'
                     }
 
-
-                    //TextView (tmp)
-                    binding.ipListe.setText(tmp)
-
-                    //delay (1000)
-                    //Restaura boton
-                    //button.setText("scanner")
                 }
-
-            }
-
-
-        }
-
-
-    }
-    //Analiza un rango de IPs desde la IP base en mascara 255.255.255.0..255
-fun testIpRange(ip_: String) {
-
-    var ListIp = binding.ipListe
-
-    var ip = ip_ //Recupera ip en dispositivo Android
-
-    //Cut last value  in ip  ip[3]
-    ip = ip.subSequence(0, ip.lastIndexOf(".")).toString()
-
-    for (elem in 0..255) { //Recorre ips de 0 .. 255
-
-        val ip_actual = ip + "." + elem.toString() //Ip actual
-
-        GlobalScope.launch(Dispatchers.Main) {
-            withContext(Dispatchers.IO) {
-
-                var existe: Boolean
-                existe = ipExist(ip_actual)
-                /*Antes de escribir en el TextView se guarda en un txt temporal
-                *Una segunda corrutina se encarga de escribir en el TextView
-                * pasado un tiempo sin nuevas lineas
-                 */
-                tmp += ip_actual + "..." + existe.toString() + '\n'
-
             }
         }
-    }
 
     }
 
